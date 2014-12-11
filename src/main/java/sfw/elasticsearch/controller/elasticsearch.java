@@ -300,46 +300,6 @@ public class elasticsearch {
 		return new CommonJSON(Messages.SUCCESS,bean.toString()).toString();
 	}
 	
-	@RequestMapping(value = "/queryByIForIds")
-	@ResponseBody
-	public String queryByIForIds(String indexName, String jsonStr){
-		if("".equals(indexName) || indexName == null )
-			return new CommonJSON(Messages.NO_INDEX_DEFINE).toString();
-		if(!esTemplate.indexExists(indexName))
-			return new CommonJSON(Messages.NO_INDEX_EXISTS).toString();
-		if("".equals(jsonStr) || jsonStr == null )
-			return new CommonJSON(Messages.NOT_EMPTY).toString();
-		
-		Gson gson = new Gson();
-		List<QueryDataFormats> jsons = gson.fromJson(jsonStr, new TypeToken<List<QueryDataFormats>>() {}.getType());
-		List<String> result = esTemplate.queryForIds(indexName,jsons);
-		if(result.contains(Messages.ERROR.toString()))
-				return new CommonJSON(Messages.ERROR).toString();
-		return new CommonJSON(Messages.SUCCESS, result.toString()).toString();
-	}
-	
-	@RequestMapping(value = "/queryByITForIds")
-	@ResponseBody
-	public String queryByITForIds(String indexName,String type, String jsonStr){
-		if("".equals(indexName) || indexName == null )
-			return new CommonJSON(Messages.NO_INDEX_DEFINE).toString();
-		if("".equals(type) || type == null )
-			return new CommonJSON(Messages.NO_TYPE_DEFINE).toString();
-		if(!esTemplate.indexExists(indexName))
-			return new CommonJSON(Messages.NO_INDEX_EXISTS).toString();
-		if(!esTemplate.typeExists(indexName, type))
-			return new CommonJSON(Messages.NO_TYPE_EXISTS).toString();
-		if("".equals(jsonStr) || jsonStr == null )
-			return new CommonJSON(Messages.NOT_EMPTY).toString();
-		
-		Gson gson = new Gson();
-		List<QueryDataFormats> jsons = gson.fromJson(jsonStr, new TypeToken<List<QueryDataFormats>>() {}.getType());
-		List<String> result = esTemplate.queryForIds(indexName,type,jsons);
-		if(result.contains(Messages.ERROR.toString()))
-				return new CommonJSON(Messages.ERROR).toString();
-		return new CommonJSON(Messages.SUCCESS, result.toString()).toString();
-	}
-	
 	@RequestMapping(value = "/update")
 	@ResponseBody
 	public String update(String indexName, String type, String id, String jsonStr){
