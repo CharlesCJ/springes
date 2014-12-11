@@ -97,13 +97,22 @@
 | lt        | 小于       |
 | lte       | 小于等于    |
 
->##### 3. QueryDataFormats.Relastions
+>##### 3. QueryDataFormats.RangeRelation
 > 指定greater和lesser关系为and或or
 >
 | Name      |   Resume  |
 | :-------: |:--------  |
 | AND       | 与        |
 | OR        | 或        |
+
+>##### 4. QueryDataFormats.DataRelation
+> 单条数据中的关系为and或or
+>
+| Name      |   Resume  |
+| :-------: |:--------  |
+| AND       | 与        |
+| OR        | 或        |
+
 
 #### QueryDataFormats
 >  query或delete的数据结构实体类
@@ -116,7 +125,8 @@
 | gValue       |Object    | 大于或大于等于的值                | 
 | lesser       |Lesser    | 关系为小于或小于等于              | 
 | lValue       |Object    | 小于或小于等于的值                |
-| rel          |Relastions| greater和lesser关系为and或or    |
+| rangeRelation|RangeRelation| 范围数据的左右区间关系为and或or |
+| dataRelation |DataRelation| 单条数据中的关系为and或or |
 | lat          |Object    | 纬度值                          |
 | lon          |Object    | 经度值                          |  
 | from         |String    | 从point标点指定开始范围，如"0km"   | 
