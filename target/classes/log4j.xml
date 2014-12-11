@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration PUBLIC "-//APACHE//DTD LOG4J 1.2//EN" "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+	<!-- Appenders -->
+	<appender name="consoleAppender" class="org.apache.log4j.ConsoleAppender">
+		<param name="Target" value="System.out" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy-M-d HH:mm:ss} [%p]  %c.%M - %m%n" />
+		</layout>
+	</appender>
+	
+	<appender name="rollingAppender" class="org.apache.log4j.DailyRollingFileAppender">
+		<param name="File" value="/usr/logs/application" />
+   		<param name="Encoding" value="utf-8" />
+   		<param name="DatePattern" value="'-'yyyy-MM-dd'.log'"/>
+   		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy-M-d HH:mm:ss} [%p] %X{loginName}: %c - %m%n" />
+		</layout>
+	</appender>
+	 
+	 <appender name="dbAppender" class="org.apache.log4j.jdbc.JDBCAppender">
+	 	<param name="Driver" value="com.mysql.jdbc.Driver" />
+	 	<param name="URL" value="jdbc:mysql://localhost:3306/gitsea?characterEncoding=utf-8" />
+	 	<param name="User" value="root" />
+	 	<param name="Password" value="12345" />
+		<param name="BufferSize" value="1" />
+		<param name="Sql" value="insert into AccessLogs (LoginName, Level, RemoteAddress,  Message, CreatedAt) values ('%X{loginName}', '%p', '%X{remoteAddress}', '%m','%d{yyyy-MM-dd HH:mm:ss}')" />
+	</appender>
+	<!-- Application Loggers -->
+	<logger name="com.thinkland.bangzhumai.portal" additivity="false">
+		<level value="info" />
+		<appender-ref ref="consoleAppender" />		
+	</logger>
+	
+	<root>
+		<priority value="info" />
+		<appender-ref ref="consoleAppender" />
+		<appender-ref ref="rollingAppender" />		
+	</root>
+	
+</log4j:configuration>

@@ -1,0 +1,15 @@
+C:\workspace\springes\src\main\java\sfw\elasticsearch\entity\QueryDataFormats.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\util\BaseCoreStores.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\controller\elasticsearch.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\util\BaseCoreIndexs.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\util\BaseCoreTypes.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\entity\MappingTypes.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\common\CommonJSON.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\util\EsTemplate.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\util\BaseCoreDateFormats.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\util\BaseCoreIndexAnalyzers.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\common\Messages.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\util\BaseCoreKeys.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\dto\PageBean.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\spring\UTF8StringBeanPostProcessor.java
+C:\workspace\springes\src\main\java\sfw\elasticsearch\entity\InsertDataFormats.java
