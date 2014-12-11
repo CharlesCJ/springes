@@ -432,46 +432,7 @@ queryByITFS
 | data      | String   | PageBean.toString()|
 
 
-#### 15.根据index查找符合jsonStr的数据的ID
-
->##### 1.url
-queryByIForIds
->##### 2.描述
->
-| Name      |   Type   |   Mark         |
-| :-------: |:--------:|:--------:      |
-| indexName | String   |   索引名字       |
-| jsonStr   | String   |List\<QueryDataFormats>.toString()|
->##### 3.返回
->
-| Name      |   Type   |   Mark        |
-| :-------: |:--------:|:--------:     |
-| status    | int      | 参考：200      |
-| message   | String   | 消息:"Success" |
-| data      | String   | List\<String>.toString()|
-
-
-#### 16.根据index和type查找符合jsonStr的数据的ID
-
->##### 1.url
-queryByITForIds
->##### 2.描述
->
-| Name      |   Type   |   Mark         |
-| :-------: |:--------:|:--------:      |
-| indexName | String   |   索引名字       |
-| type      | String   |   索引类型       |
-| jsonStr   | String   |List\<QueryDataFormats>.toString()|
->##### 3.返回
->
-| Name      |   Type   |   Mark        |
-| :-------: |:--------:|:--------:     |
-| status    | int      | 参考：200      |
-| message   | String   | 消息:"Success" |
-| data      | String   | List\<String>.toString()|
-
-
-#### 17.更新指定id的数据
+#### 15.更新指定id的数据
 
 >##### 1.url
 update
