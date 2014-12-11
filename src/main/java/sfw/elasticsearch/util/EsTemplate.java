@@ -27,8 +27,6 @@ import org.springframework.data.elasticsearch.ElasticsearchException;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.query.DeleteQuery;
 import org.springframework.data.elasticsearch.core.query.IndexQuery;
-import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
-import org.springframework.data.elasticsearch.core.query.SearchQuery;
 import org.springframework.stereotype.Component;
 
 import sfw.elasticsearch.common.Messages;
@@ -257,23 +255,32 @@ public class EsTemplate {
 				if(df.getFieldValue() != null){
 					QueryBuilder qb = QueryBuilders.matchQuery(df.getField(),
 							df.getFieldValue()).operator(Operator.AND);
-					boolQuery.must(qb);
+					if(QueryDataFormats.DataRelation.AND.equals(df.getDataRelation()))
+						boolQuery.must(qb);
+					else{
+						isRelastions =true;
+						fb.should(FilterBuilders.queryFilter(qb));
+					}
 				}else if(df.getLat() == null){
 					isRelastions = true;
 					if(QueryDataFormats.RangeRelation.AND.equals(df.getRangeRelation())){
 						if(QueryDataFormats.Lesser.lt.equals(df.getLesser()))
 							fb.must(FilterBuilders.rangeFilter(df.getField()).lt(df.getlValue()));
-						fb.must(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
+						else
+							fb.must(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
 						if(QueryDataFormats.Greater.gt.equals(df.getGreater()))
 							fb.must(FilterBuilders.rangeFilter(df.getField()).gt(df.getgValue()));
-						fb.must(FilterBuilders.rangeFilter(df.getField()).gte(df.getgValue()));
+						else
+							fb.must(FilterBuilders.rangeFilter(df.getField()).gte(df.getgValue()));
 					}else if(QueryDataFormats.RangeRelation.OR.equals(df.getRangeRelation())){
 						if(QueryDataFormats.Lesser.lt.equals(df.getLesser()))
 							fb.should(FilterBuilders.rangeFilter(df.getField()).lt(df.getlValue()));
-						fb.should(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
+						else
+							fb.should(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
 						if(QueryDataFormats.Greater.gt.equals(df.getGreater()))
 							fb.should(FilterBuilders.rangeFilter(df.getField()).gt(df.getgValue()));
-						fb.should(FilterBuilders.rangeFilter(df.getField()).gte(df.getgValue()));
+						else
+							fb.should(FilterBuilders.rangeFilter(df.getField()).gte(df.getgValue()));
 					}else{
 						if(QueryDataFormats.Lesser.lt.equals(df.getLesser()))
 							fb.must(FilterBuilders.rangeFilter(df.getField()).lt(df.getlValue()));
@@ -392,8 +399,7 @@ public class EsTemplate {
 		
 		try{
 			SearchResponse responsesearch = builder.setQuery(CommonQuery(querys))
-					.setFrom(from).setSize(size)
-					.setSize(Integer.MAX_VALUE).execute().actionGet();
+					.setFrom(from).setSize(size).execute().actionGet();
 			SearchHit[] shit = responsesearch.getHits().getHits();
 			for(SearchHit sh:shit){
 				result.add(sh.getSourceAsString());
@@ -419,8 +425,7 @@ public class EsTemplate {
 		
 		try{
 			SearchResponse responsesearch = builder.setQuery(CommonQuery(querys))
-					.setFrom(from).setSize(size)
-					.setSize(Integer.MAX_VALUE).execute().actionGet();
+					.setFrom(from).setSize(size).execute().actionGet();
 			SearchHit[] shit = responsesearch.getHits().getHits();
 			for(SearchHit sh:shit){
 				result.add(sh.getSourceAsString());
@@ -433,52 +438,15 @@ public class EsTemplate {
 	}
 	
 	/**
-	 * 指定indices，查询field值为fieldStr的记录的_id
-	 * @param indexName
-	 * @param querys
-	 * @param querys
-	 * @return
-	 */
-	public List<String> queryForIds(String indexName, List<QueryDataFormats> dataFormats){
-		try {
-			SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices("")
-					.withQuery(CommonQuery(dataFormats)).build();
-			return elasticsearchTemplate.queryForIds(searchQuery);
-		} catch (Exception e) {
-			List<String> err = new ArrayList<String>();
-			err.add(Messages.ERROR.toString());
-			return err;
-		}
-	}
-	/**
-	 * 指定indices和type，查询field值为fieldStr的记录的_id
-	 * @param indexName
-	 * @param type
-	 * @param querys
-	 * @param querys
-	 * @return
-	 */
-	public List<String> queryForIds(String indexName,String type, List<QueryDataFormats> dataFormats){
-		try {
-			SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices("")
-					.withQuery(CommonQuery(dataFormats)).build();
-			return elasticsearchTemplate.queryForIds(searchQuery);
-		} catch (Exception e) {
-			List<String> err = new ArrayList<String>();
-			err.add(Messages.ERROR.toString());
-			return err;
-		}
-	}
-	
-	/**
 	 * query公共方法
 	 * @param dataFormats
 	 * @return
 	 */
-	public QueryBuilder CommonQuery(List<QueryDataFormats> dataFormats){
+	public String CommonQuery(List<QueryDataFormats> dataFormats){
 		BoolFilterBuilder fb = FilterBuilders.boolFilter();
-		BoolFilterBuilder fb1 = FilterBuilders.boolFilter();
 		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+		FilteredQueryBuilder query = null;
+		boolean tmp = false;
 		
 		for(QueryDataFormats df:dataFormats){
 			if(df.getFieldValue()!=null){
@@ -486,23 +454,30 @@ public class EsTemplate {
 						df.getFieldValue()).operator(Operator.AND);
 				if(QueryDataFormats.DataRelation.AND.equals(df.getDataRelation()))
 					boolQuery.must(qb);
-				else 
-					fb1.should(FilterBuilders.queryFilter(qb));
+				else{
+					tmp =true;
+					fb.should(FilterBuilders.queryFilter(qb));
+				}
 			}else if(df.getLat() == null){
+				tmp = true;
 				if(QueryDataFormats.RangeRelation.AND.equals(df.getRangeRelation())){
 					if(QueryDataFormats.Lesser.lt.equals(df.getLesser()))
 						fb.must(FilterBuilders.rangeFilter(df.getField()).lt(df.getlValue()));
-					fb.must(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
+					else
+						fb.must(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
 					if(QueryDataFormats.Greater.gt.equals(df.getGreater()))
 						fb.must(FilterBuilders.rangeFilter(df.getField()).gt(df.getgValue()));
-					fb.must(FilterBuilders.rangeFilter(df.getField()).gte(df.getgValue()));
+					else
+						fb.must(FilterBuilders.rangeFilter(df.getField()).gte(df.getgValue()));
 				}else if(QueryDataFormats.RangeRelation.OR.equals(df.getRangeRelation())){
 					if(QueryDataFormats.Lesser.lt.equals(df.getLesser()))
 						fb.should(FilterBuilders.rangeFilter(df.getField()).lt(df.getlValue()));
-					fb.should(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
+					else
+						fb.should(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
 					if(QueryDataFormats.Greater.gt.equals(df.getGreater()))
 						fb.should(FilterBuilders.rangeFilter(df.getField()).gt(df.getgValue()));
-					fb.should(FilterBuilders.rangeFilter(df.getField()).gte(df.getgValue()));
+					else
+						fb.should(FilterBuilders.rangeFilter(df.getField()).gte(df.getgValue()));
 				}else{
 					if(QueryDataFormats.Lesser.lt.equals(df.getLesser()))
 						fb.must(FilterBuilders.rangeFilter(df.getField()).lt(df.getlValue()));
@@ -514,6 +489,7 @@ public class EsTemplate {
 						fb.must(FilterBuilders.rangeFilter(df.getField()).gte(df.getlValue()));
 				}
 			}else{
+				tmp = true;
 				fb.must(FilterBuilders.geoDistanceRangeFilter(df.getField())
 						.point(Double.parseDouble(df.getLat().toString()),Double.parseDouble(df.getLon().toString()))
 						.from(df.getFrom()).to(df.getTo())
@@ -523,7 +499,12 @@ public class EsTemplate {
 			}
 		}
 		
-		return QueryBuilders.filteredQuery(QueryBuilders.filteredQuery( boolQuery,fb),fb1);
+		if(tmp){
+			query = QueryBuilders.filteredQuery( boolQuery,fb);
+			return query.toString();
+		}
+		return boolQuery.toString();
+		
 	}
 	
 	/**
