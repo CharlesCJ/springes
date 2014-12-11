@@ -329,27 +329,166 @@ public class EsTemplate {
 	}
 
 	/**
-	 * query公共部分
-	 * @param builder
+	 * 指定indices，查找field值为value的所有记录
+	 * @param indexName
+	 * @param querys
 	 * @param querys
 	 * @return
 	 */
-	public SearchRequestBuilder commonQueryMethod(SearchRequestBuilder builder, List<QueryDataFormats> querys){
-		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-		FilteredQueryBuilder query = null;
+	public List<String> query(String indexName, List<QueryDataFormats> querys){
+		List<String> result = new ArrayList<String>();
+		SearchRequestBuilder builder= client.prepareSearch(indexName);	
+		
+		try{
+			SearchResponse responsesearch = builder.setQuery(CommonQuery(querys))
+					.setSize(Integer.MAX_VALUE).execute().actionGet();
+			SearchHit[] shit = responsesearch.getHits().getHits();
+			for(SearchHit sh:shit){
+				result.add(sh.getSourceAsString());
+			}
+			return result;
+		}catch(Exception es){
+			result.add(Messages.ERROR.toString());
+			return result;
+		}
+		
+	}
+	/**
+	 * 指定indices和type，查找field值为value的所有记录
+	 * @param indexName
+	 * @param querys
+	 * @param querys
+	 * @return
+	 */
+	public List<String> query(String indexName,String type, List<QueryDataFormats> querys){
+		List<String> result = new ArrayList<String>();
+		SearchRequestBuilder builder= client.prepareSearch(indexName).setTypes(type);	
+		
+		try{
+			SearchResponse responsesearch = builder.setQuery(CommonQuery(querys))
+					.setSize(Integer.MAX_VALUE).execute().actionGet();
+			SearchHit[] shit = responsesearch.getHits().getHits();
+			for(SearchHit sh:shit){
+				result.add(sh.getSourceAsString());
+			}
+			return result;
+		}catch(Exception es){
+			result.add(Messages.ERROR.toString());
+			return result;
+		}
+	}
+	/**
+	 * 指定indices，查找field值为value的从from开始，数量为size的记录。
+	 * @param indexName
+	 * @param from
+	 * @param size
+	 * @param querys
+	 * @param querys
+	 * @return
+	 */
+	public List<String> query(String indexName,int from,int size, List<QueryDataFormats> querys){
+		List<String> result = new ArrayList<String>();
+		SearchRequestBuilder builder= client.prepareSearch(indexName);	
+		
+		try{
+			SearchResponse responsesearch = builder.setQuery(CommonQuery(querys))
+					.setFrom(from).setSize(size)
+					.setSize(Integer.MAX_VALUE).execute().actionGet();
+			SearchHit[] shit = responsesearch.getHits().getHits();
+			for(SearchHit sh:shit){
+				result.add(sh.getSourceAsString());
+			}
+			return result;
+		}catch(Exception es){
+			result.add(Messages.ERROR.toString());
+			return result;
+		}
+	}
+	/**
+	 * 指定indices和type，查找field值为value的从from开始，数量为size的记录。
+	 * @param indexName
+	 * @param from
+	 * @param size
+	 * @param querys
+	 * @param querys
+	 * @return
+	 */
+	public List<String> query(String indexName,String type,int from,int size, List<QueryDataFormats> querys){
+		List<String> result = new ArrayList<String>();
+		SearchRequestBuilder builder= client.prepareSearch(indexName).setTypes(type);	
+		
+		try{
+			SearchResponse responsesearch = builder.setQuery(CommonQuery(querys))
+					.setFrom(from).setSize(size)
+					.setSize(Integer.MAX_VALUE).execute().actionGet();
+			SearchHit[] shit = responsesearch.getHits().getHits();
+			for(SearchHit sh:shit){
+				result.add(sh.getSourceAsString());
+			}
+			return result;
+		}catch(Exception es){
+			result.add(Messages.ERROR.toString());
+			return result;
+		}
+	}
+	
+	/**
+	 * 指定indices，查询field值为fieldStr的记录的_id
+	 * @param indexName
+	 * @param querys
+	 * @param querys
+	 * @return
+	 */
+	public List<String> queryForIds(String indexName, List<QueryDataFormats> dataFormats){
+		try {
+			SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices("")
+					.withQuery(CommonQuery(dataFormats)).build();
+			return elasticsearchTemplate.queryForIds(searchQuery);
+		} catch (Exception e) {
+			List<String> err = new ArrayList<String>();
+			err.add(Messages.ERROR.toString());
+			return err;
+		}
+	}
+	/**
+	 * 指定indices和type，查询field值为fieldStr的记录的_id
+	 * @param indexName
+	 * @param type
+	 * @param querys
+	 * @param querys
+	 * @return
+	 */
+	public List<String> queryForIds(String indexName,String type, List<QueryDataFormats> dataFormats){
+		try {
+			SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices("")
+					.withQuery(CommonQuery(dataFormats)).build();
+			return elasticsearchTemplate.queryForIds(searchQuery);
+		} catch (Exception e) {
+			List<String> err = new ArrayList<String>();
+			err.add(Messages.ERROR.toString());
+			return err;
+		}
+	}
+	
+	/**
+	 * query公共方法
+	 * @param dataFormats
+	 * @return
+	 */
+	public QueryBuilder CommonQuery(List<QueryDataFormats> dataFormats){
 		BoolFilterBuilder fb = FilterBuilders.boolFilter();
 		BoolFilterBuilder fb1 = FilterBuilders.boolFilter();
-		boolean isRelastions = false;
-		for(QueryDataFormats df : querys){
-			if(df.getFieldValue() != null){
+		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+		
+		for(QueryDataFormats df:dataFormats){
+			if(df.getFieldValue()!=null){
 				QueryBuilder qb = QueryBuilders.matchQuery(df.getField(),
 						df.getFieldValue()).operator(Operator.AND);
-					if(QueryDataFormats.DataRelation.AND.equals(df.getDataRelation()))
-						boolQuery.must(qb);
-					else 
-						fb1.should(FilterBuilders.queryFilter(qb));
+				if(QueryDataFormats.DataRelation.AND.equals(df.getDataRelation()))
+					boolQuery.must(qb);
+				else 
+					fb1.should(FilterBuilders.queryFilter(qb));
 			}else if(df.getLat() == null){
-				isRelastions = true;
 				if(QueryDataFormats.RangeRelation.AND.equals(df.getRangeRelation())){
 					if(QueryDataFormats.Lesser.lt.equals(df.getLesser()))
 						fb.must(FilterBuilders.rangeFilter(df.getField()).lt(df.getlValue()));
@@ -375,7 +514,6 @@ public class EsTemplate {
 						fb.must(FilterBuilders.rangeFilter(df.getField()).gte(df.getlValue()));
 				}
 			}else{
-				isRelastions = true;
 				fb.must(FilterBuilders.geoDistanceRangeFilter(df.getField())
 						.point(Double.parseDouble(df.getLat().toString()),Double.parseDouble(df.getLon().toString()))
 						.from(df.getFrom()).to(df.getTo())
@@ -384,271 +522,10 @@ public class EsTemplate {
 						.geoDistance(GeoDistance.ARC));
 			}
 		}
-		if(isRelastions){
-			query = QueryBuilders.filteredQuery( boolQuery,fb);
-			builder.setQuery(QueryBuilders.filteredQuery(query,fb1));
-		}else {
-			builder.setQuery(QueryBuilders.filteredQuery(boolQuery,fb1));
-		}
-		return builder;
+		
+		return QueryBuilders.filteredQuery(QueryBuilders.filteredQuery( boolQuery,fb),fb1);
 	}
 	
-	/**
-	 * 指定indices，查找field值为value的所有记录
-	 * @param indexName
-	 * @param querys
-	 * @param querys
-	 * @return
-	 */
-	public List<String> query(String indexName, List<QueryDataFormats> querys){
-		List<String> result = new ArrayList<String>();
-		SearchRequestBuilder builder= client.prepareSearch(indexName);	
-		
-		try{
-			
-			builder = commonQueryMethod(builder, querys);
-			
-			SearchResponse responsesearch = builder.setSize(Integer.MAX_VALUE).execute().actionGet();
-			
-			SearchHit[] shit = responsesearch.getHits().getHits();
-			for(SearchHit sh:shit){
-				result.add(sh.getSourceAsString());
-			}
-			return result;
-		}catch(Exception es){
-			result.add(Messages.ERROR.toString());
-			return result;
-		}
-		
-	}
-	/**
-	 * 指定indices和type，查找field值为value的所有记录
-	 * @param indexName
-	 * @param querys
-	 * @param querys
-	 * @return
-	 */
-	public List<String> query(String indexName,String type, List<QueryDataFormats> querys){
-		List<String> result = new ArrayList<String>();
-		SearchRequestBuilder builder= client.prepareSearch(indexName).setTypes(type);	
-		
-		try{
-			
-			builder = commonQueryMethod(builder, querys);
-			
-			SearchResponse responsesearch = builder.setSize(Integer.MAX_VALUE).execute().actionGet();
-			SearchHit[] shit = responsesearch.getHits().getHits();
-			for(SearchHit sh:shit){
-				result.add(sh.getSourceAsString());
-			}
-			return result;
-		}catch(Exception es){
-			result.add(Messages.ERROR.toString());
-			return result;
-		}
-	}
-	/**
-	 * 指定indices，查找field值为value的从from开始，数量为size的记录。
-	 * @param indexName
-	 * @param from
-	 * @param size
-	 * @param querys
-	 * @param querys
-	 * @return
-	 */
-	public List<String> query(String indexName,int from,int size, List<QueryDataFormats> querys){
-		List<String> result = new ArrayList<String>();
-		SearchRequestBuilder builder= client.prepareSearch(indexName);	
-		
-		try{
-			
-			builder = commonQueryMethod(builder, querys);
-			
-			builder.setFrom(from).setSize(size);
-			SearchResponse responsesearch = builder.execute().actionGet();
-			SearchHit[] shit = responsesearch.getHits().getHits();
-			for(SearchHit sh:shit){
-				result.add(sh.getSourceAsString());
-			}
-			return result;
-		}catch(Exception es){
-			result.add(Messages.ERROR.toString());
-			return result;
-		}
-	}
-	/**
-	 * 指定indices和type，查找field值为value的从from开始，数量为size的记录。
-	 * @param indexName
-	 * @param from
-	 * @param size
-	 * @param querys
-	 * @param querys
-	 * @return
-	 */
-	public List<String> query(String indexName,String type,int from,int size, List<QueryDataFormats> querys){
-		List<String> result = new ArrayList<String>();
-		SearchRequestBuilder builder= client.prepareSearch(indexName).setTypes(type);	
-		
-		try{
-			
-			builder = commonQueryMethod(builder, querys);
-			
-			builder.setFrom(from).setSize(size);
-			SearchResponse responsesearch = builder.execute().actionGet();
-			SearchHit[] shit = responsesearch.getHits().getHits();
-			for(SearchHit sh:shit){
-				result.add(sh.getSourceAsString());
-			}
-			return result;
-		}catch(Exception es){
-			result.add(Messages.ERROR.toString());
-			return result;
-		}
-	}
-	/**
-	 * 指定indices，查询field值为fieldStr的记录的_id
-	 * @param indexName
-	 * @param querys
-	 * @param querys
-	 * @return
-	 */
-	public List<String> queryForIds(String indexName, List<QueryDataFormats> dataFormats){
-		BoolFilterBuilder fb = FilterBuilders.boolFilter();
-		FilteredQueryBuilder query = null;
-		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-		boolean isRelastions = false;
-		try {
-			for(QueryDataFormats df:dataFormats){
-				if(df.getFieldValue()!=null){
-					QueryBuilder qb = QueryBuilders.matchQuery(df.getField(),
-							df.getFieldValue()).operator(Operator.AND);
-					boolQuery.must(qb);
-				}else if(df.getLat() == null){
-					isRelastions = true;
-					if(QueryDataFormats.RangeRelation.AND.equals(df.getRangeRelation())){
-						if(QueryDataFormats.Lesser.lt.equals(df.getLesser()))
-							fb.must(FilterBuilders.rangeFilter(df.getField()).lt(df.getlValue()));
-						fb.must(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
-						if(QueryDataFormats.Greater.gt.equals(df.getGreater()))
-							fb.must(FilterBuilders.rangeFilter(df.getField()).gt(df.getgValue()));
-						fb.must(FilterBuilders.rangeFilter(df.getField()).gte(df.getgValue()));
-					}else if(QueryDataFormats.RangeRelation.OR.equals(df.getRangeRelation())){
-						if(QueryDataFormats.Lesser.lt.equals(df.getLesser()))
-							fb.should(FilterBuilders.rangeFilter(df.getField()).lt(df.getlValue()));
-						fb.should(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
-						if(QueryDataFormats.Greater.gt.equals(df.getGreater()))
-							fb.should(FilterBuilders.rangeFilter(df.getField()).gt(df.getgValue()));
-						fb.should(FilterBuilders.rangeFilter(df.getField()).gte(df.getgValue()));
-					}else{
-						if(QueryDataFormats.Lesser.lt.equals(df.getLesser()))
-							fb.must(FilterBuilders.rangeFilter(df.getField()).lt(df.getlValue()));
-						else if(QueryDataFormats.Lesser.lte.equals(df.getLesser()))
-							fb.must(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
-						else if(QueryDataFormats.Greater.gt.equals(df.getGreater()))
-							fb.must(FilterBuilders.rangeFilter(df.getField()).gt(df.getlValue()));
-						else
-							fb.must(FilterBuilders.rangeFilter(df.getField()).gte(df.getlValue()));
-					}
-				}else{
-					isRelastions = true;
-					fb.must(FilterBuilders.geoDistanceRangeFilter(df.getField())
-							.point(Double.parseDouble(df.getLat().toString()),Double.parseDouble(df.getLon().toString()))
-							.from(df.getFrom()).to(df.getTo())
-							.includeLower(df.isIncludeLower()).includeUpper(df.isIncludeUpper())
-							.optimizeBbox(OptimizeBbox.memory.toString())
-							.geoDistance(GeoDistance.ARC));
-				}
-			}
-			
-			if(isRelastions){
-				query = QueryBuilders.filteredQuery( boolQuery,fb);
-				SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices(indexName)
-						.withQuery(query).build();
-				return elasticsearchTemplate.queryForIds(searchQuery);
-			}else {
-				SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices(indexName)
-						.withQuery(boolQuery).build();
-				return elasticsearchTemplate.queryForIds(searchQuery);
-			}
-			
-		} catch (Exception e) {
-			List<String> err = new ArrayList<String>();
-			err.add(Messages.ERROR.toString());
-			return err;
-		}
-	}
-	/**
-	 * 指定indices和type，查询field值为fieldStr的记录的_id
-	 * @param indexName
-	 * @param type
-	 * @param querys
-	 * @param querys
-	 * @return
-	 */
-	public List<String> queryForIds(String indexName,String type, List<QueryDataFormats> dataFormats){
-		BoolFilterBuilder fb = FilterBuilders.boolFilter();
-		FilteredQueryBuilder query = null;
-		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-		boolean isRelastions = false;
-		try {
-			for(QueryDataFormats df:dataFormats){
-				if(df.getFieldValue()!=null){
-					QueryBuilder qb = QueryBuilders.matchQuery(df.getField(),
-							df.getFieldValue()).operator(Operator.AND);
-					boolQuery.must(qb);
-				}else if(df.getLat() == null){
-					isRelastions = true;
-					if(QueryDataFormats.RangeRelation.AND.equals(df.getRangeRelation())){
-						if(QueryDataFormats.Lesser.lt.equals(df.getLesser()))
-							fb.must(FilterBuilders.rangeFilter(df.getField()).lt(df.getlValue()));
-						fb.must(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
-						if(QueryDataFormats.Greater.gt.equals(df.getGreater()))
-							fb.must(FilterBuilders.rangeFilter(df.getField()).gt(df.getgValue()));
-						fb.must(FilterBuilders.rangeFilter(df.getField()).gte(df.getgValue()));
-					}else if(QueryDataFormats.RangeRelation.OR.equals(df.getRangeRelation())){
-						if(QueryDataFormats.Lesser.lt.equals(df.getLesser()))
-							fb.should(FilterBuilders.rangeFilter(df.getField()).lt(df.getlValue()));
-						fb.should(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
-						if(QueryDataFormats.Greater.gt.equals(df.getGreater()))
-							fb.should(FilterBuilders.rangeFilter(df.getField()).gt(df.getgValue()));
-						fb.should(FilterBuilders.rangeFilter(df.getField()).gte(df.getgValue()));
-					}else{
-						if(QueryDataFormats.Lesser.lt.equals(df.getLesser()))
-							fb.must(FilterBuilders.rangeFilter(df.getField()).lt(df.getlValue()));
-						else if(QueryDataFormats.Lesser.lte.equals(df.getLesser()))
-							fb.must(FilterBuilders.rangeFilter(df.getField()).lte(df.getlValue()));
-						else if(QueryDataFormats.Greater.gt.equals(df.getGreater()))
-							fb.must(FilterBuilders.rangeFilter(df.getField()).gt(df.getlValue()));
-						else
-							fb.must(FilterBuilders.rangeFilter(df.getField()).gte(df.getlValue()));
-					}
-				}else{
-					isRelastions = true;
-					fb.must(FilterBuilders.geoDistanceRangeFilter(df.getField())
-							.point(Double.parseDouble(df.getLat().toString()),Double.parseDouble(df.getLon().toString()))
-							.from(df.getFrom()).to(df.getTo())
-							.includeLower(df.isIncludeLower()).includeUpper(df.isIncludeUpper())
-							.optimizeBbox(OptimizeBbox.memory.toString())
-							.geoDistance(GeoDistance.ARC));
-				}
-			}
-			
-			if(isRelastions){
-				query = QueryBuilders.filteredQuery( boolQuery,fb);
-				SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices(indexName)
-						.withTypes(type).withQuery(query).build();
-				return elasticsearchTemplate.queryForIds(searchQuery);
-			}else {
-				SearchQuery searchQuery = new NativeSearchQueryBuilder().withIndices(indexName)
-						.withTypes(type).withQuery(boolQuery).build();
-				return elasticsearchTemplate.queryForIds(searchQuery);
-			}
-		} catch (Exception e) {
-			List<String> err = new ArrayList<String>();
-			err.add(Messages.ERROR.toString());
-			return err;
-		}
-	}
 	/**
 	 * 指定indices，type，id更新数据
 	 * @param indexName
